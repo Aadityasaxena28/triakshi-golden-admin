@@ -11,6 +11,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
 
 // Mock data - replace with actual API calls
@@ -20,6 +27,7 @@ const mockBills = [
     userId: "USER123",
     totalAmount: 25000,
     paymentStatus: "Paid",
+    deliveryStatus: "Dispatched",
     createdAt: "2024-01-15T10:30:00Z",
     itemCount: 3,
   },
@@ -28,6 +36,7 @@ const mockBills = [
     userId: "USER456",
     totalAmount: 15000,
     paymentStatus: "Pending",
+    deliveryStatus: "Yet to be Dispatched",
     createdAt: "2024-01-14T15:45:00Z",
     itemCount: 2,
   },
@@ -36,6 +45,7 @@ const mockBills = [
     userId: "USER789",
     totalAmount: 50000,
     paymentStatus: "Paid",
+    deliveryStatus: "Dispatched",
     createdAt: "2024-01-13T09:20:00Z",
     itemCount: 5,
   },
@@ -43,8 +53,16 @@ const mockBills = [
 
 export default function Bills() {
   const navigate = useNavigate();
-  const [bills] = useState(mockBills);
+  const [bills, setBills] = useState(mockBills);
   const [searchQuery, setSearchQuery] = useState("");
+
+  const handleDeliveryStatusChange = (billId: string, newStatus: string) => {
+    setBills((prevBills) =>
+      prevBills.map((bill) =>
+        bill.id === billId ? { ...bill, deliveryStatus: newStatus } : bill
+      )
+    );
+  };
 
   const filteredBills = bills.filter(
     (bill) =>
@@ -90,6 +108,7 @@ export default function Bills() {
               <TableHead className="text-right">Total Amount</TableHead>
               <TableHead className="text-center">Items</TableHead>
               <TableHead className="text-center">Payment Status</TableHead>
+              <TableHead className="text-center">Delivery Status</TableHead>
               <TableHead>Date</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -114,6 +133,20 @@ export default function Bills() {
                   >
                     {bill.paymentStatus}
                   </Badge>
+                </TableCell>
+                <TableCell className="text-center">
+                  <Select
+                    value={bill.deliveryStatus}
+                    onValueChange={(value) => handleDeliveryStatusChange(bill.id, value)}
+                  >
+                    <SelectTrigger className="w-[180px] bg-card">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-card">
+                      <SelectItem value="Dispatched">Dispatched</SelectItem>
+                      <SelectItem value="Yet to be Dispatched">Yet to be Dispatched</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </TableCell>
                 <TableCell className="text-muted-foreground">
                   {formatDate(bill.createdAt)}
