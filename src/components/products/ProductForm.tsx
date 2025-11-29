@@ -1,22 +1,32 @@
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
-  FormDescription,
 } from "@/components/ui/form";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+
+const ACCEPTED_IMAGE_TYPES = [
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "image/webp",
+];
+
+const MAX_FILES = 3;
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
 const productSchema = z.object({
   name: z.string().min(1, "Name is required").max(100),
@@ -27,14 +37,30 @@ const productSchema = z.object({
   description: z.string().optional(),
   discount: z.number().int().min(0).max(100).optional(),
   availability: z.boolean(),
-  image: z.string().url().optional().or(z.literal("")),
+  image: z
+    .array(z.instanceof(File))
+    .max(3, "You can upload up to 3 images")
+    .refine(
+      (files) => files.every((file) => ACCEPTED_IMAGE_TYPES.includes(file.type)),
+      "Only JPG, JPEG, PNG, or WebP images are allowed"
+    )
+    .refine(
+      (files) => files.every((file) => file.size <= MAX_FILE_SIZE),
+      "Each image must be below 5MB"
+    ),
 });
 
 type ProductFormData = z.infer<typeof productSchema>;
 
+interface ImagePreview {
+  url: string;
+  file?: File;
+  existingUrl?: string; // For existing images from server
+}
+
 interface ProductFormProps {
-  initialData?: Partial<ProductFormData>;
-  onSubmit: (data: ProductFormData & { benefits: string }) => void;
+  initialData?: Partial<ProductFormData> & { existingImages?: string[] };
+  onSubmit: (data: ProductFormData & { benefits: string; toDelete: string[] }) => void;
   isLoading?: boolean;
 }
 
@@ -43,6 +69,8 @@ export function ProductForm({ initialData, onSubmit, isLoading }: ProductFormPro
     initialData?.description?.split(",").map((b) => b.trim()).filter(Boolean) || []
   );
   const [benefitInput, setBenefitInput] = useState("");
+  const [imagePreviews, setImagePreviews] = useState<ImagePreview[]>([]);
+  const [toDelete, setToDelete] = useState<string[]>([]);
 
   const form = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
@@ -55,9 +83,20 @@ export function ProductForm({ initialData, onSubmit, isLoading }: ProductFormPro
       description: initialData?.description || "",
       discount: initialData?.discount || 0,
       availability: initialData?.availability ?? true,
-      image: initialData?.image || "",
+      image: [],
     },
   });
+
+  // Initialize existing images
+  useEffect(() => {
+    if (initialData?.existingImages && initialData.existingImages.length > 0) {
+      const existingPreviews = initialData.existingImages.map((url) => ({
+        url,
+        existingUrl: url,
+      }));
+      setImagePreviews(existingPreviews);
+    }
+  }, [initialData?.existingImages]);
 
   const addBenefit = () => {
     if (benefitInput.trim()) {
@@ -70,16 +109,78 @@ export function ProductForm({ initialData, onSubmit, isLoading }: ProductFormPro
     setBenefits(benefits.filter((_, i) => i !== index));
   };
 
+  const handleImageChange = (files: File[]) => {
+    const availableSlots = MAX_FILES - imagePreviews.length;
+    const limitedFiles = files.slice(0, availableSlots);
+
+    const newPreviews = limitedFiles.map((file) => ({
+      url: URL.createObjectURL(file),
+      file,
+    }));
+
+    // Add new previews to existing ones
+    setImagePreviews([...imagePreviews, ...newPreviews]);
+    
+    // Update form with all new files (existing + newly added)
+    const allNewFiles = [
+      ...imagePreviews.filter((p) => p.file).map((p) => p.file as File),
+      ...limitedFiles
+    ];
+    form.setValue("image", allNewFiles);
+  };
+
+  const removeImage = (index: number) => {
+    const imageToRemove = imagePreviews[index];
+
+    // If it's an existing image, add to delete list
+    if (imageToRemove.existingUrl) {
+      setToDelete([...toDelete, imageToRemove.existingUrl]);
+    } else {
+      // Revoke object URL to prevent memory leaks
+      URL.revokeObjectURL(imageToRemove.url);
+    }
+
+    const newPreviews = imagePreviews.filter((_, i) => i !== index);
+    setImagePreviews(newPreviews);
+
+    // Update form with only new files
+    const newFiles = newPreviews
+      .filter((p) => p.file)
+      .map((p) => p.file as File);
+    form.setValue("image", newFiles);
+  };
+
   const handleSubmit = (data: ProductFormData) => {
+    // Validate that we have at least one image (existing or new)
+    if (imagePreviews.length === 0) {
+      form.setError("image", {
+        type: "manual",
+        message: "At least one image is required"
+      });
+      return;
+    }
+
     onSubmit({
       ...data,
       benefits: benefits.join(", "),
+      toDelete,
     });
   };
 
+  // Cleanup object URLs on unmount
+  useEffect(() => {
+    return () => {
+      imagePreviews.forEach((preview) => {
+        if (!preview.existingUrl) {
+          URL.revokeObjectURL(preview.url);
+        }
+      });
+    };
+  }, []);
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+      <div className="space-y-6">
         <Card>
           <CardHeader>
             <CardTitle>General Information</CardTitle>
@@ -144,10 +245,55 @@ export function ProductForm({ initialData, onSubmit, isLoading }: ProductFormPro
               name="image"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Image URL</FormLabel>
+                  <FormLabel>
+                    Product Images (max 3, max size 5MB each)
+                  </FormLabel>
                   <FormControl>
-                    <Input placeholder="https://..." {...field} />
+                    <Input
+                      type="file"
+                      accept="image/jpeg,image/jpg,image/png,image/webp"
+                      multiple
+                      disabled={imagePreviews.length >= MAX_FILES}
+                      onChange={(e) => {
+                        const files = Array.from(e.target.files || []);
+                        handleImageChange(files);
+                      }}
+                    />
                   </FormControl>
+                  <FormDescription>
+                    {imagePreviews.length}/{MAX_FILES} images uploaded
+                  </FormDescription>
+
+                  {/* Image Previews */}
+                  {imagePreviews.length > 0 && (
+                    <div className="mt-4 grid grid-cols-3 gap-4">
+                      {imagePreviews.map((preview, idx) => (
+                        <div
+                          key={idx}
+                          className="relative group aspect-square rounded-lg overflow-hidden border-2 border-border bg-muted"
+                        >
+                          <img
+                            src={preview.url}
+                            alt={`Preview ${idx + 1}`}
+                            className="w-full h-full object-cover"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeImage(idx)}
+                            className="absolute top-2 right-2 bg-destructive text-destructive-foreground rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/90"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                          {preview.existingUrl && (
+                            <div className="absolute bottom-2 left-2 bg-blue-500 text-white text-xs px-2 py-1 rounded">
+                              Existing
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
                   <FormMessage />
                 </FormItem>
               )}
@@ -300,11 +446,16 @@ export function ProductForm({ initialData, onSubmit, isLoading }: ProductFormPro
           <Button type="button" variant="outline" onClick={() => window.history.back()}>
             Cancel
           </Button>
-          <Button type="submit" disabled={isLoading} className="bg-gradient-saffron">
+          <Button 
+            type="button" 
+            disabled={isLoading} 
+            className="bg-gradient-saffron"
+            onClick={form.handleSubmit(handleSubmit)}
+          >
             {isLoading ? "Saving..." : "Save Product"}
           </Button>
         </div>
-      </form>
+      </div>
     </Form>
   );
 }

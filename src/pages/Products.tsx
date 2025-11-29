@@ -1,10 +1,13 @@
-import { useState } from "react";
-import { Plus, Search, Filter, Package } from "lucide-react";
+import { deleteProduct, getProducts } from "@/API/ProductAPI";
+import { ProductTable } from "@/components/products/ProductTable";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ProductTable } from "@/components/products/ProductTable";
-import { useNavigate } from "react-router-dom";
+import { ProductsType } from "@/DataType/Products";
 import { toast } from "@/hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
+import { Filter, Package, Plus, Search } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 // Mock data - replace with actual API calls
 const mockProducts = [
@@ -45,22 +48,53 @@ const mockProducts = [
 
 export default function Products() {
   const navigate = useNavigate();
-  const [products, setProducts] = useState(mockProducts);
+  const [products, setProducts] = useState<ProductsType[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const productQuery = useQuery({
+    queryKey:["GetAllProducts"],
+    queryFn:()=> getProducts(),
 
+  })
+
+  useEffect(()=>{
+    if(productQuery.data){
+      setProducts(productQuery.data);
+    }
+  },[productQuery.data])
   const filteredProducts = products.filter((product) =>
     product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     product.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
     product.category?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async(id: string) => {
     setProducts(products.filter((p) => p.id !== id));
+    const deleteResp =  await deleteProduct(id);
+
+    await productQuery.refetch();
     toast({
       title: "Product deleted",
       description: "The product has been successfully deleted.",
     });
   };
+
+   if (productQuery.isLoading||productQuery.isFetching) {
+    return (
+      <div className="py-12 text-center">
+        <p className="text-muted-foreground">Loading products...</p>
+      </div>
+    );
+  }
+
+  if (productQuery.isError) {
+    return (
+      <div className="py-12 text-center">
+        <p className="text-destructive">
+          Failed to load products: {(productQuery.error as Error)?.message || "Unknown error"}
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

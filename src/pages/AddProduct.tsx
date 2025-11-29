@@ -1,21 +1,70 @@
+import { AddProductAPI } from "@/API/ProductAPI";
 import { ProductForm } from "@/components/products/ProductForm";
-import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { ArrowLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
+type ProductSubmitPayload = {
+  name: string;
+  price: number;
+  quantity: number;
+  type: string;
+  category?: string;
+  description?: string;
+  discount?: number;
+  availability: boolean;
+  benefits: string;   // from ProductForm
+  image: File[];      // from ProductForm
+  toDelete: string[];
+};
 export default function AddProduct() {
   const navigate = useNavigate();
+  const [isLoading,setLoading] = useState<boolean>(false)
+  const handleSubmit = async (data: ProductSubmitPayload) => {
+    try {
+      // console.log("Form payload (before FormData):", data);
+      // setLoading(true);
 
-  const handleSubmit = (data: any) => {
-    console.log("Adding product:", data);
-    // TODO: Call API endpoint POST /api/products/add-product
-    toast({
-      title: "Product added",
-      description: "The product has been successfully added to your inventory.",
-    });
-    navigate("/products");
+      const formData = new FormData();
+      formData.append("name", data.name);
+      formData.append("price", String(data.price));
+      formData.append("quantity", String(data.quantity));
+      formData.append("type", data.type);
+      formData.append("category", data.category || "");
+      formData.append("description", data.description || "");
+      formData.append("discount", String(data.discount ?? 0));
+      formData.append("availability", String(data.availability));
+      formData.append("benefits", data.benefits);
+
+      // multiple images – backend should read `req.files` for "images"
+      data.image.forEach((file) => {
+        formData.append("image", file);
+      });
+
+      const resp = await AddProductAPI(formData);
+
+      if (!resp.success) {
+        throw new Error("Product ADD Failed");
+      }
+
+      toast({
+        title: "Product added",
+        description: "The product has been successfully added to your inventory.",
+      });
+      navigate("/products");
+    } catch (error) {
+      // console.error(error);
+      toast({
+        title: "Product add failed",
+        description: "The product could not be added to your inventory.",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
+
 
   return (
     <div className="space-y-6 max-w-4xl">
@@ -35,7 +84,7 @@ export default function AddProduct() {
         </div>
       </div>
 
-      <ProductForm onSubmit={handleSubmit} />
+      <ProductForm onSubmit={handleSubmit} isLoading={isLoading} />
     </div>
   );
 }

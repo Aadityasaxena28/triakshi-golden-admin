@@ -1,34 +1,112 @@
+import { getProductByIdAPI, updateProductAPI } from "@/API/ProductAPI";
 import { ProductForm } from "@/components/products/ProductForm";
-import { useNavigate, useParams } from "react-router-dom";
-import { toast } from "@/hooks/use-toast";
-import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-// Mock data - replace with actual API call
-const mockProduct = {
-  name: "Ruby Gemstone",
-  price: 15000,
-  quantity: 25,
-  discount: 10,
-  availability: true,
-  type: "Gemstone",
-  category: "Precious Stones",
-  description: "A beautiful natural ruby gemstone with excellent clarity",
-  image: "",
-};
+import { toast } from "@/hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
+import { ArrowLeft } from "lucide-react";
+import { useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 
 export default function EditProduct() {
   const navigate = useNavigate();
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
+  const [isSaving, setIsSaving] = useState(false);
 
-  const handleSubmit = (data: any) => {
-    console.log("Updating product:", id, data);
-    // TODO: Call API endpoint PUT /api/products/:id
-    toast({
-      title: "Product updated",
-      description: "The product has been successfully updated.",
-    });
-    navigate("/products");
+  const {
+    data: product,
+    isError,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["Get-Product-By-Id", id],
+    queryFn: () => getProductByIdAPI(id as string),
+    enabled: !!id,
+  });
+
+  const handleSubmit = async (formValues: any) => {
+    if (!id) return;
+
+    try {
+      
+      setIsSaving(true);
+      console.log("Updating product:", id, formValues);
+
+      const formData = new FormData();
+      formData.append("name", formValues.name);
+      formData.append("price", formValues.price);
+      formData.append("quantity", formValues.quantity);
+      formData.append("type", formValues.type);
+      formData.append("category", formValues.category || "");
+      formData.append("description", formValues.description || "");
+      formData.append("discount", String(formValues.discount ?? 0));
+      formData.append("availability", String(formValues.availability));
+      formData.append("benefits", formValues.benefits || "");
+
+      // toDelete is an array -> send as JSON string
+      if (Array.isArray(formValues.toDelete) && formValues.toDelete.length > 0) {
+        formData.append("toDelete", JSON.stringify(formValues.toDelete));
+      }
+
+      // new images from form (ProductForm puts ONLY new files into image[])
+      if (Array.isArray(formValues.image)) {
+        formValues.image.forEach((file: File) => {
+          formData.append("image", file);
+        });
+      }
+
+      const resp = await updateProductAPI(formData, id);
+
+      toast({
+        title: "Product updated",
+        description: "The product has been successfully updated.",
+      });
+      navigate("/products");
+    } catch (err) {
+      console.error(err);
+      toast({
+        title: "Failed to update",
+        description: "The product could not be updated.",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Basic loading / error handling
+  if (isLoading) {
+    return (
+      <div className="space-y-6 max-w-4xl">
+        <p className="text-muted-foreground">Loading product...</p>
+      </div>
+    );
+  }
+
+  if (isError || !product) {
+    return (
+      <div className="space-y-6 max-w-4xl">
+        <p className="text-destructive">
+          Failed to load product: {(error as Error)?.message || "Unknown error"}
+        </p>
+        <Button variant="outline" onClick={() => navigate("/products")}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Products
+        </Button>
+      </div>
+    );
+  }
+
+  // Map API product to ProductForm initialData
+  const initialData = {
+    name: product.name,
+    price: product.price,
+    quantity: product.quantity,
+    discount: product.discount ?? 0,
+    availability: product.availability ?? true,
+    type: product.type,
+    category: product.category ?? "",
+    description: product.description ?? "",
+    // This is used by your ProductForm for previews
+    existingImages: product.images || (product.image ? [product.image] : []),
   };
 
   return (
@@ -49,7 +127,11 @@ export default function EditProduct() {
         </div>
       </div>
 
-      <ProductForm initialData={mockProduct} onSubmit={handleSubmit} />
+      <ProductForm
+        initialData={initialData}
+        onSubmit={handleSubmit}
+        isLoading={isSaving}
+      />
     </div>
   );
 }
