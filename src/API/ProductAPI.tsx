@@ -12,7 +12,7 @@ export async function getProducts(): Promise<ProductsType[]> {
   if (!Array.isArray(payload.data)) {
     throw new Error("Invalid response format: expected product array");
   }
-  console.log(payload.data);
+  // console.log(payload.data);
   return payload.data.map((d: any) => data_to_product(d));
 }
 
