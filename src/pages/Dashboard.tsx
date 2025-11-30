@@ -105,11 +105,12 @@ const stats = [
         />
         <div className="absolute inset-0 bg-gradient-to-r from-primary/80 to-accent/60 flex items-center px-8">
           <div>
-            <h1 className="text-4xl font-bold text-white mb-2">
-              Jai Maa Pitambara
-            </h1>
+            <h1 className="text-4xl font-bold text-white mb-2 text-center">
+                  Jai Maa Pitambara
+             </h1>
+
             <p className="text-white/90 text-lg">
-              Manage your sacred gemstones and yantras with ease
+              ॐ ह्लीं बगलामुखी सर्वदुष्टानां वाचं मुखं पदं स्तम्भय जिह्वां कीलय बुद्धिं विनाशय ह्रीं ॐ स्वाहा॥
             </p>
           </div>
         </div>
