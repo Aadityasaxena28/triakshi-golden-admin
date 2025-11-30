@@ -1,38 +1,99 @@
-import { Package, Receipt, TrendingUp, DollarSign } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { billStatsAPI, ProductCountAPI } from "@/API/DashboardAPI";
 import gemsHero from "@/assets/gems-hero.jpg";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useQuery } from "@tanstack/react-query";
+import { DollarSign, Package, Receipt, TrendingUp } from "lucide-react";
+import { useEffect, useState } from "react";
 
 export default function Dashboard() {
-  const stats = [
-    {
-      title: "Total Products",
-      value: "248",
-      icon: Package,
-      trend: "+12%",
-      color: "text-primary",
-    },
-    {
-      title: "Total Orders",
-      value: "1,429",
-      icon: Receipt,
-      trend: "+8%",
-      color: "text-accent",
-    },
-    {
-      title: "Revenue",
-      value: "₹12.5L",
-      icon: DollarSign,
-      trend: "+23%",
-      color: "text-secondary",
-    },
-    {
-      title: "Growth",
-      value: "18.2%",
-      icon: TrendingUp,
-      trend: "+5%",
-      color: "text-primary",
-    },
-  ];
+
+  const [productCount,setProductCount]= useState(0);
+  const [billStats,setBillStats] = useState({
+    totalOrders:0,
+      totalRevenue:0,
+      growth:0
+  })
+
+  const totalRevenueNumber =
+  typeof billStats.totalRevenue === "number"
+    ? billStats.totalRevenue
+    : Number(billStats.totalRevenue || 0);
+
+const stats = [
+  {
+    title: "Total Products",
+    value: productCount.toLocaleString(),
+    icon: Package,
+    trend: "+12%", // you can wire a real trend later
+    color: "text-primary",
+  },
+  {
+    title: "Total Orders",
+    value: billStats.totalOrders.toLocaleString(),
+    icon: Receipt, 
+    trend: "+8%", 
+    color: "text-accent",
+  },
+  {
+    title: "Revenue",
+    
+    value: `₹${(totalRevenueNumber / 100000).toFixed(2)}L`,
+    icon: DollarSign,
+    trend: "+23%", 
+    color: "text-secondary",
+  },
+  {
+    title: "Growth",
+    value: `${billStats.growth.toFixed
+      ? billStats.growth.toFixed(1)
+      : Number(billStats.growth || 0).toFixed(1)
+    }%`,
+    icon: TrendingUp,
+    trend: "+5%", // or same as growth, up to you
+    color: "text-primary",
+  },
+];
+
+  const billStatQuery = useQuery({
+    queryKey:["Get-Bill-Stats"],
+    queryFn:()=>billStatsAPI(),
+    staleTime:3*60*1000
+  })
+  const totalProduct = useQuery({
+    queryKey:["Total-Products"],
+    queryFn:()=>ProductCountAPI(),
+    staleTime:3*1000*60,
+  });
+  useEffect(()=>{
+    if(totalProduct.data){
+      setProductCount(totalProduct.data);
+    }
+
+  },[totalProduct.data])
+
+  useEffect(()=>{
+    if(billStatQuery.data){
+      setBillStats(billStatQuery.data);
+    }
+  },[billStatQuery.data])
+
+  if (totalProduct.isLoading||billStatQuery.isLoading) {
+    return (
+      <div className="py-12 text-center">
+        <p className="text-muted-foreground">Loading Stats...</p>
+      </div>
+    );
+  }
+
+  if (totalProduct.isError||billStatQuery.isError) {
+    return (
+      <div className="py-12 text-center">
+        <p className="text-destructive">
+          Failed to load Stats: {"Failed to load All Stats"}
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

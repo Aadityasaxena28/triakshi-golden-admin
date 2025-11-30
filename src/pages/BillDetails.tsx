@@ -1,40 +1,59 @@
-import { ArrowLeft, Receipt } from "lucide-react";
+import { getBillById } from "@/API/BillsAPI";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { useQuery } from "@tanstack/react-query";
+import { ArrowLeft, Receipt } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 
-// Mock data - replace with actual API call
-const mockBillDetails = {
-  id: "BILL001",
-  userId: "USER123",
-  userName: "Rajesh Kumar",
-  userEmail: "rajesh@example.com",
-  totalAmount: 25000,
-  paymentStatus: "Paid",
-  createdAt: "2024-01-15T10:30:00Z",
-  items: [
-    {
-      productId: "1",
-      productName: "Ruby Gemstone",
-      quantity: 1,
-      price: 15000,
-      discount: 10,
-    },
-    {
-      productId: "2",
-      productName: "Shri Yantra",
-      quantity: 2,
-      price: 5000,
-      discount: 0,
-    },
-  ],
-};
+interface BillItem {
+  productId: string;
+  name: string;
+  image:string;
+  qty: number;
+  unitPrice: number;
+  discount?: number;
+}
+
+interface BillDetailsType {
+  _id: string;
+  userId: string;
+  userDetails:{
+    address:{
+      addressLine1: string, 
+      addressLine2: string, 
+      city: string, 
+      state: string, 
+      pincode: string
+    }
+    contact:{
+      name: string, 
+      email: string,
+      mobileNumber: string
+    }
+  }
+  
+  amount: number;
+  status: string; // "not_paid" | "paid" | "yet to be dispatch" | ...
+  created_at: string;
+  items: BillItem[];
+}
 
 export default function BillDetails() {
   const navigate = useNavigate();
-  const { billId } = useParams();
+  const { billId } = useParams<{ billId: string }>();
+
+  const {
+    data: bill,
+    isLoading,
+    isError,
+    error,
+  } = useQuery<BillDetailsType>({
+    queryKey: ["Get-Bill-By-Id", billId],
+    queryFn: () => getBillById(billId as string),
+    enabled: !!billId,
+  });
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-IN", {
@@ -46,11 +65,43 @@ export default function BillDetails() {
     });
   };
 
-  const calculateItemTotal = (price: number, quantity: number, discount: number) => {
+  const calculateItemTotal = (price: number, quantity: number, discount: number = 0) => {
     const subtotal = price * quantity;
     const discountAmount = (subtotal * discount) / 100;
     return subtotal - discountAmount;
   };
+
+  const getPaymentStatus = (status: string) => {
+    if (status === "not_paid") return "Not Paid";
+    return "Paid";
+  };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6 max-w-4xl">
+        <p className="text-muted-foreground">Loading bill details...</p>
+      </div>
+    );
+  }
+
+  if (isError || !bill) {
+    return (
+      <div className="space-y-6 max-w-4xl">
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => navigate("/bills")}
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+        <p className="text-destructive mt-4">
+          Failed to load bill: {(error as Error)?.message || "Bill not found"}
+        </p>
+      </div>
+    );
+  }
+
+  const paymentStatus = getPaymentStatus(bill.status);
 
   return (
     <div className="space-y-6 max-w-4xl">
@@ -64,7 +115,7 @@ export default function BillDetails() {
         </Button>
         <div>
           <h1 className="text-3xl font-bold">Bill Details</h1>
-          <p className="text-muted-foreground mt-1">Bill ID: {billId}</p>
+          <p className="text-muted-foreground mt-1">Bill ID: {bill._id}</p>
         </div>
       </div>
 
@@ -79,23 +130,23 @@ export default function BillDetails() {
           <CardContent className="space-y-3">
             <div>
               <p className="text-sm text-muted-foreground">Bill ID</p>
-              <p className="font-medium">{mockBillDetails.id}</p>
+              <p className="font-medium">{bill._id}</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Date</p>
-              <p className="font-medium">{formatDate(mockBillDetails.createdAt)}</p>
+              <p className="font-medium">{formatDate(bill.created_at)}</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Payment Status</p>
               <Badge
-                variant={mockBillDetails.paymentStatus === "Paid" ? "default" : "secondary"}
+                variant={paymentStatus === "Paid" ? "default" : "secondary"}
                 className={
-                  mockBillDetails.paymentStatus === "Paid"
+                  paymentStatus === "Paid"
                     ? "bg-green-500/10 text-green-700"
                     : "bg-amber-500/10 text-amber-700"
                 }
               >
-                {mockBillDetails.paymentStatus}
+                {paymentStatus}
               </Badge>
             </div>
           </CardContent>
@@ -108,15 +159,19 @@ export default function BillDetails() {
           <CardContent className="space-y-3">
             <div>
               <p className="text-sm text-muted-foreground">User ID</p>
-              <p className="font-medium">{mockBillDetails.userId}</p>
+              <p className="font-medium">{bill.userId}</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Name</p>
-              <p className="font-medium">{mockBillDetails.userName}</p>
+              <p className="font-medium">
+                {bill.userDetails.contact.name || "N/A"}
+              </p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Email</p>
-              <p className="font-medium">{mockBillDetails.userEmail}</p>
+              <p className="font-medium">
+                {bill.userDetails.contact.email || "N/A"}
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -128,14 +183,14 @@ export default function BillDetails() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {mockBillDetails.items.map((item, index) => (
-              <div key={index}>
+            {bill.items?.map((item, index) => (
+              <div key={item.productId || index}>
                 <div className="flex justify-between items-start">
                   <div>
-                    <p className="font-medium">{item.productName}</p>
+                    <p className="font-medium">{item.name}</p>
                     <p className="text-sm text-muted-foreground">
-                      Quantity: {item.quantity} × ₹{item.price.toLocaleString()}
-                      {item.discount > 0 && (
+                      Quantity: {item.qty} × ₹{item.unitPrice.toLocaleString()}
+                      {item.discount && item.discount > 0 && (
                         <span className="ml-2 text-accent">
                           ({item.discount}% off)
                         </span>
@@ -143,10 +198,11 @@ export default function BillDetails() {
                     </p>
                   </div>
                   <p className="font-semibold">
-                    ₹{calculateItemTotal(item.price, item.quantity, item.discount).toLocaleString()}
+                    ₹
+                    {bill.amount}
                   </p>
                 </div>
-                {index < mockBillDetails.items.length - 1 && (
+                {index < bill.items.length - 1 && (
                   <Separator className="mt-4" />
                 )}
               </div>
@@ -157,7 +213,7 @@ export default function BillDetails() {
             <div className="flex justify-between items-center text-lg font-bold">
               <span>Total Amount</span>
               <span className="text-primary">
-                ₹{mockBillDetails.totalAmount.toLocaleString()}
+                ₹{bill.amount.toLocaleString()}
               </span>
             </div>
           </div>
