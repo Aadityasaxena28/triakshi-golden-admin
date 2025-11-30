@@ -106,7 +106,7 @@ const stats = [
         <div className="absolute inset-0 bg-gradient-to-r from-primary/80 to-accent/60 flex items-center px-8">
           <div>
             <h1 className="text-4xl font-bold text-white mb-2 text-center">
-                  Jai Maa Pitambara
+                  JAI MAA PITAMBARA
              </h1>
 
             <p className="text-white/90 text-lg">
