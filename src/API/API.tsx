@@ -13,18 +13,10 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     // 1. Attach Bearer token
-    const token = localStorage.getItem("authToken");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    const token = localStorage.getItem("adminToken");
+    if (authHeaderName && token) {
+      config.headers[authHeaderName] = token;
     }
-
-    // 2. Attach custom API auth header from env
-    if (authHeaderName && authHeaderValue) {
-      config.headers[authHeaderName] = authHeaderValue;
-    } else {
-      console.warn("API auth headers are missing in env vars");
-    }
-
     return config;
   },
   (error) => Promise.reject(error)
