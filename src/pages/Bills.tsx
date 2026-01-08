@@ -125,9 +125,9 @@ const handleStatusChange = (billId: string, newStatus: string) => {
         return "Payment Pending";
       case "paid":
         return "Yet to be Dispatched";
-      case "yet to be dispatch":
+      case "yet to be dispatched":
         return "Yet to be Dispatched";
-      case "dispatch":
+      case "dispatched":
         return "Dispatched";
       case "Delivered":
       case "delivered":
@@ -229,10 +229,10 @@ const handleStatusChange = (billId: string, newStatus: string) => {
                         <SelectContent className="bg-card">
                           <SelectItem value="not_paid">Not Paid</SelectItem>
                           <SelectItem value="paid">Paid</SelectItem>
-                          <SelectItem value="yet to be dispatch">
+                          <SelectItem value="yet to be dispatched">
                             Yet to be Dispatched
                           </SelectItem>
-                          <SelectItem value="dispatch">Dispatched</SelectItem>
+                          <SelectItem value="dispatched">Dispatched</SelectItem>
                           <SelectItem value="Delivered">Delivered</SelectItem>
                         </SelectContent>
                       </Select>

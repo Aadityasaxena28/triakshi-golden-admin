@@ -4,7 +4,8 @@ import api from './API';
 export async function getProducts(): Promise<ProductsType[]> {
   const resp = await api.get(`/products/products`);
   const payload = resp.data;
-
+  // const params = new URLSearchParams();
+  // params.append("category","all");
   if (!payload?.isOkay) {
     throw new Error(payload?.error || "Failed to fetch products");
   }
