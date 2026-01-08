@@ -13,6 +13,7 @@ import EditProduct from "./pages/EditProduct";
 import NotFound from "./pages/NotFound";
 import Products from "./pages/Products";
 import { RequireAuth } from "./pages/RequireAuth";
+import SlotManagement from "./pages/slot-booking";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +33,7 @@ const App = () => (
           <Route path="/products/edit/:id" element={<AdminLayout><EditProduct /></AdminLayout>} />
           <Route path="/bills" element={<AdminLayout><Bills /></AdminLayout>} />
           <Route path="/bills/:billId" element={<AdminLayout><BillDetails /></AdminLayout>} />
+          <Route path="/manage-slots" element={<AdminLayout><SlotManagement/></AdminLayout>}/>
           </Route>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

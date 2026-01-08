@@ -1,4 +1,3 @@
-import { LayoutDashboard, Package, Receipt, Gem } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import {
   Sidebar,
@@ -11,11 +10,13 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { CalendarRange, Gem, LayoutDashboard, Package, Receipt } from "lucide-react";
 
 const navItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Products", url: "/products", icon: Package },
   { title: "Orders & Bills", url: "/bills", icon: Receipt },
+  {title: "Manage Slots", url:"/manage-slots", icon: CalendarRange},
 ];
 
 export function AppSidebar() {
