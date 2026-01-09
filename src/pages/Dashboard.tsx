@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { DollarSign, Package, Receipt, TrendingUp } from "lucide-react";
 import { useEffect, useState } from "react";
-
+import { Link } from "react-router-dom";
 export default function Dashboard() {
 
   const [productCount,setProductCount]= useState(0);
@@ -141,8 +141,8 @@ const stats = [
           <CardTitle>Quick Actions</CardTitle>
         </CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <a
-            href="/products/add"
+          <Link
+            to="/products/add"
             className="p-6 rounded-lg border border-border hover:border-primary hover:shadow-soft transition-all bg-gradient-to-br from-primary/5 to-transparent"
           >
             <Package className="h-8 w-8 text-primary mb-3" />
@@ -150,9 +150,9 @@ const stats = [
             <p className="text-sm text-muted-foreground">
               Add gemstones, yantras, or other items
             </p>
-          </a>
-          <a
-            href="/products"
+          </Link>
+          <Link
+            to="/products"
             className="p-6 rounded-lg border border-border hover:border-accent hover:shadow-soft transition-all bg-gradient-to-br from-accent/5 to-transparent"
           >
             <Package className="h-8 w-8 text-accent mb-3" />
@@ -160,9 +160,9 @@ const stats = [
             <p className="text-sm text-muted-foreground">
               View, edit, or delete products
             </p>
-          </a>
-          <a
-            href="/bills"
+          </Link>
+          <Link
+            to="/bills"
             className="p-6 rounded-lg border border-border hover:border-secondary hover:shadow-soft transition-all bg-gradient-to-br from-secondary/5 to-transparent"
           >
             <Receipt className="h-8 w-8 text-secondary mb-3" />
@@ -170,7 +170,7 @@ const stats = [
             <p className="text-sm text-muted-foreground">
               Check customer bills and orders
             </p>
-          </a>
+          </Link>
         </CardContent>
       </Card>
     </div>
