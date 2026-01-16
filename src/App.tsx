@@ -12,7 +12,7 @@ import Dashboard from "./pages/Dashboard";
 import EditProduct from "./pages/EditProduct";
 import NotFound from "./pages/NotFound";
 import Products from "./pages/Products";
-import { RequireAuth } from "./pages/RequireAuth";
+import RequireAuth from "./pages/RequireAuth";
 import SlotManagement from "./pages/slot-booking";
 
 const queryClient = new QueryClient();
