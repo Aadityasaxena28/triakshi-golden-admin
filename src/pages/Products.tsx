@@ -1,84 +1,71 @@
-import { deleteProduct, getProducts } from "@/API/ProductAPI";
+import { deleteProduct, getProducts, getProductsCount } from "@/API/ProductAPI";
+import { Pagination } from "@/components/products/Pagination";
 import { ProductTable } from "@/components/products/ProductTable";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ProductsType } from "@/DataType/Products";
 import { toast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { Filter, Package, Plus, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-// Mock data - replace with actual API calls
-const mockProducts = [
-  {
-    id: "1",
-    name: "Ruby Gemstone",
-    price: 15000,
-    quantity: 25,
-    discount: 10,
-    availability: true,
-    type: "Gemstone",
-    category: "Precious Stones",
-    image: "",
-  },
-  {
-    id: "2",
-    name: "Shri Yantra",
-    price: 5000,
-    quantity: 50,
-    discount: 0,
-    availability: true,
-    type: "Yantra",
-    category: "Sacred Items",
-    image: "",
-  },
-  {
-    id: "3",
-    name: "Emerald Stone",
-    price: 20000,
-    quantity: 0,
-    discount: 15,
-    availability: false,
-    type: "Gemstone",
-    category: "Precious Stones",
-    image: "",
-  },
-];
+const ITEMS_PER_PAGE = 20;
 
 export default function Products() {
   const navigate = useNavigate();
-  const [products, setProducts] = useState<ProductsType[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+
   const productQuery = useQuery({
-    queryKey:["GetAllProducts"],
-    queryFn:()=> getProducts(),
+    queryKey: ["GetAllProducts", currentPage, ITEMS_PER_PAGE],
+    queryFn: () => getProducts(currentPage, ITEMS_PER_PAGE),
+  });
 
-  })
+  const countQuery = useQuery({
+    queryKey: ["GetProductsCount"],
+    queryFn: () => getProductsCount(),
+  });
 
-  useEffect(()=>{
-    if(productQuery.data){
-      setProducts(productQuery.data);
-    }
-  },[productQuery.data])
-  const filteredProducts = products.filter((product) =>
-    product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    product.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    product.category?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Reset to page 1 when search query changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
 
-  const handleDelete = async(id: string) => {
-    setProducts(products.filter((p) => p.id !== id));
-    const deleteResp =  await deleteProduct(id);
+  const filteredProducts = productQuery.data?.filter(
+    (product) =>
+      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.category?.toLowerCase().includes(searchQuery.toLowerCase())
+  ) || [];
 
+  // Pagination calculations
+  const totalItems = countQuery.data || 0;
+  const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+
+  const handleDelete = async (id: string) => {
+    await deleteProduct(id);
     await productQuery.refetch();
+    await countQuery.refetch();
+
+    // Adjust current page if needed after deletion
+    const newTotalItems = totalItems - 1;
+    const newTotalPages = Math.ceil(newTotalItems / ITEMS_PER_PAGE);
+    if (currentPage > newTotalPages && newTotalPages > 0) {
+      setCurrentPage(newTotalPages);
+    }
+
     toast({
       title: "Product deleted",
       description: "The product has been successfully deleted.",
     });
   };
 
-   if (productQuery.isLoading||productQuery.isFetching) {
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  if (productQuery.isLoading || productQuery.isFetching) {
     return (
       <div className="py-12 text-center">
         <p className="text-muted-foreground">Loading products...</p>
@@ -90,7 +77,8 @@ export default function Products() {
     return (
       <div className="py-12 text-center">
         <p className="text-destructive">
-          Failed to load products: {(productQuery.error as Error)?.message || "Unknown error"}
+          Failed to load products:{" "}
+          {(productQuery.error as Error)?.message || "Unknown error"}
         </p>
       </div>
     );
@@ -104,6 +92,11 @@ export default function Products() {
           <p className="text-muted-foreground mt-1">
             Manage your gemstones, yantras, and sacred items
           </p>
+          {countQuery.data && (
+            <p className="text-sm text-muted-foreground mt-1">
+              Total: {countQuery.data} products
+            </p>
+          )}
         </div>
         <Button
           onClick={() => navigate("/products/add")}
@@ -147,7 +140,17 @@ export default function Products() {
           )}
         </div>
       ) : (
-        <ProductTable products={filteredProducts} onDelete={handleDelete} />
+        <div className="space-y-4">
+          <ProductTable products={filteredProducts} onDelete={handleDelete} />
+          
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+            itemsPerPage={ITEMS_PER_PAGE}
+            totalItems={totalItems}
+          />
+        </div>
       )}
     </div>
   );

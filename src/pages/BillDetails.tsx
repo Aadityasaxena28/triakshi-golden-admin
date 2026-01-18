@@ -54,7 +54,7 @@ export default function BillDetails() {
     queryFn: () => getBillById(billId as string),
     enabled: !!billId,
   });
-
+  console.log(bill);
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-IN", {
       year: "numeric",
@@ -173,6 +173,44 @@ export default function BillDetails() {
                 {bill.userDetails.contact.email || "N/A"}
               </p>
             </div>
+
+            
+            {
+            bill.userDetails.address.addressLine1 &&
+            <div>
+              <p className="text-sm text-muted-foreground">Address Lane</p>
+              <p className="font-medium">
+                {bill.userDetails.address.addressLine1}
+              </p>
+            </div>
+            }
+            {
+              bill.userDetails.address.city &&
+            <div>
+              <p className="text-sm text-muted-foreground">City</p>
+              <p className="font-medium">
+                {bill.userDetails.address.city}
+              </p>
+            </div>
+            }
+            {
+              bill.userDetails.address.state &&
+            <div>
+              <p className="text-sm text-muted-foreground">State</p>
+              <p className="font-medium">
+                {bill.userDetails.address.state}
+              </p>
+            </div>
+            }
+            {
+              bill.userDetails.address.pincode &&
+            <div>
+              <p className="text-sm text-muted-foreground">Zip Code</p>
+              <p className="font-medium">
+                {bill.userDetails.address.pincode}
+              </p>
+            </div>
+            }
           </CardContent>
         </Card>
       </div>

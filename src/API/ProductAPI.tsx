@@ -1,11 +1,14 @@
 import { data_to_product, ProductsType } from '@/DataType/Products';
 import api from './API';
 
-export async function getProducts(): Promise<ProductsType[]> {
-  const resp = await api.get(`/products/products`);
+export async function getProducts(page,count): Promise<ProductsType[]> {
+  const params = new URLSearchParams();
+  params.append("page",page.toString());
+  params.append("productCount",count.toString());
+  // ?${params.toString()}
+  const resp = await api.get(`/products/products?${params.toString()}`);
   const payload = resp.data;
-  // const params = new URLSearchParams();
-  // params.append("category","all");
+
   if (!payload?.isOkay) {
     throw new Error(payload?.error || "Failed to fetch products");
   }
@@ -15,6 +18,12 @@ export async function getProducts(): Promise<ProductsType[]> {
   }
   // console.log(payload.data);
   return payload.data.map((d: any) => data_to_product(d));
+}
+export async function getProductsCount() {
+  const resp = await api.get("/products/count");
+  const payload = resp.data;
+  if(!payload.success) return  Promise.reject("Failed to fetch products count.")
+  return payload.count;
 }
 
 export async function AddProductAPI(params: FormData) {

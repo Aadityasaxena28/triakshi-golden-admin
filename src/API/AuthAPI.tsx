@@ -13,5 +13,5 @@ export async function SigInAPI(params:{
 export async function verifyTokenAPI() {
   const resp = await api.get("/auth/admin-verify");
   const payload = resp.data;
-  return payload;
+  return payload.success;
 }
