@@ -27,11 +27,13 @@ export async function getProductsCount() {
 }
 
 export async function AddProductAPI(params: FormData) {
+  // console.log(params);
   const resp = await api.post("/products/add-product", params);
   return resp.data;
 }
 
 export async function updateProductAPI(data: FormData, id: string) {
+  console.log(data)
   const resp = await api.put(`/products/products/${id}`, data, );
 
   const payload = resp.data;

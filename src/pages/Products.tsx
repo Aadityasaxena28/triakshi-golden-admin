@@ -29,8 +29,12 @@ export default function Products() {
   // Reset to page 1 when search query changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery]);
 
+  }, [searchQuery]);
+  useEffect(()=>{
+    //  refetch products when currentPage changes
+    productQuery.refetch();
+  },[])
   const filteredProducts = productQuery.data?.filter(
     (product) =>
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||

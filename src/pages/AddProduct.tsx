@@ -15,7 +15,8 @@ type ProductSubmitPayload = {
   description?: string;
   discount?: number;
   availability: boolean;
-  benefits: string;   // from ProductForm
+  benefits: [string];   // from ProductForm
+  Weight?:number;
   image: File[];      // from ProductForm
   toDelete: string[];
 };
@@ -36,8 +37,8 @@ export default function AddProduct() {
       formData.append("description", data.description || "");
       formData.append("discount", String(data.discount ?? 0));
       formData.append("availability", String(data.availability));
-      formData.append("benefits", data.benefits);
-
+      formData.append("benefits", data.benefits?.join());
+      formData.append("weight",String(data.Weight));
       // multiple images – backend should read `req.files` for "images"
       data.image.forEach((file) => {
         formData.append("image", file);
@@ -55,7 +56,7 @@ export default function AddProduct() {
       });
       navigate("/products");
     } catch (error) {
-      // console.error(error);
+      console.error(error);
       toast({
         title: "Product add failed",
         description: "The product could not be added to your inventory.",

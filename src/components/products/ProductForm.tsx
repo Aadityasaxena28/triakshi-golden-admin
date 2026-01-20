@@ -37,6 +37,7 @@ const productSchema = z.object({
   description: z.string().optional(),
   discount: z.number().int().min(0).max(100).optional(),
   availability: z.boolean(),
+  Weight: z.number().min(0).optional(),
   image: z
     .array(z.instanceof(File))
     .max(3, "You can upload up to 3 images")
@@ -48,6 +49,7 @@ const productSchema = z.object({
       (files) => files.every((file) => file.size <= MAX_FILE_SIZE),
       "Each image must be below 5MB"
     ),
+  benefits: z.array(z.string()).optional(),
 });
 
 type ProductFormData = z.infer<typeof productSchema>;
@@ -60,13 +62,13 @@ interface ImagePreview {
 
 interface ProductFormProps {
   initialData?: Partial<ProductFormData> & { existingImages?: string[] };
-  onSubmit: (data: ProductFormData & { benefits: string; toDelete: string[] }) => void;
+  onSubmit: (data: ProductFormData & { benefits:[string]; toDelete: string[] }) => void;
   isLoading?: boolean;
 }
 
 export function ProductForm({ initialData, onSubmit, isLoading }: ProductFormProps) {
   const [benefits, setBenefits] = useState<string[]>(
-    initialData?.description?.split(",").map((b) => b.trim()).filter(Boolean) || []
+    initialData?.benefits
   );
   const [benefitInput, setBenefitInput] = useState("");
   const [imagePreviews, setImagePreviews] = useState<ImagePreview[]>([]);
@@ -83,6 +85,8 @@ export function ProductForm({ initialData, onSubmit, isLoading }: ProductFormPro
       description: initialData?.description || "",
       discount: initialData?.discount || 0,
       availability: initialData?.availability ?? true,
+      Weight: Number(initialData?.Weight)||0,
+      benefits: initialData?.benefits ||[],
       image: [],
     },
   });
@@ -162,7 +166,7 @@ export function ProductForm({ initialData, onSubmit, isLoading }: ProductFormPro
 
     onSubmit({
       ...data,
-      benefits: benefits.join(", "),
+      benefits: benefits,
       toDelete,
     });
   };
@@ -232,6 +236,24 @@ export function ProductForm({ initialData, onSubmit, isLoading }: ProductFormPro
                         placeholder="0"
                         {...field}
                         onChange={(e) => field.onChange(parseInt(e.target.value))}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="Weight"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Weight</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        placeholder="0"
+                        {...field}
+                        onChange={(e) => field.onChange(parseFloat(e.target.value))}
                       />
                     </FormControl>
                     <FormMessage />
@@ -376,7 +398,7 @@ export function ProductForm({ initialData, onSubmit, isLoading }: ProductFormPro
                 </Button>
               </div>
               <div className="flex flex-wrap gap-2 mt-2">
-                {benefits.map((benefit, index) => (
+                {benefits?.map((benefit, index) => (
                   <div
                     key={index}
                     className="flex items-center gap-1 bg-secondary text-secondary-foreground px-3 py-1 rounded-full text-sm"

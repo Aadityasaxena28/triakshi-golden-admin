@@ -17,12 +17,15 @@ export default function EditProduct() {
     data: product,
     isError,
     isLoading,
+    refetch,
     error,
   } = useQuery({
     queryKey: ["Get-Product-By-Id", id],
     queryFn: () => getProductByIdAPI(id as string),
     enabled: !!id,
   });
+
+ 
 
   const handleSubmit = async (formValues: any) => {
     if (!id) return;
@@ -41,8 +44,8 @@ export default function EditProduct() {
       formData.append("description", formValues.description || "");
       formData.append("discount", String(formValues.discount ?? 0));
       formData.append("availability", String(formValues.availability));
-      formData.append("benefits", formValues.benefits || "");
-
+      formData.append("benefits", formValues.benefits?.join() || []);
+      formData.append("weight",String(formValues.Weight));
       // toDelete is an array -> send as JSON string
       if (Array.isArray(formValues.toDelete) && formValues.toDelete.length > 0) {
         formData.append("toDelete", JSON.stringify(formValues.toDelete));
@@ -61,6 +64,7 @@ export default function EditProduct() {
         title: "Product updated",
         description: "The product has been successfully updated.",
       });
+      await refetch();
       navigate("/products");
     } catch (err) {
       console.error(err);
@@ -106,6 +110,8 @@ export default function EditProduct() {
     type: product.type,
     category: product.category ?? "",
     description: product.description ?? "",
+    benefits: product.benefits || [],
+    Weight: product.weight||0,
     // This is used by your ProductForm for previews
     existingImages: product.images || (product.image ? [product.image] : []),
   };
