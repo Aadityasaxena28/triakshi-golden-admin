@@ -33,8 +33,6 @@ export default function EditProduct() {
     try {
       
       setIsSaving(true);
-      console.log("Updating product:", id, formValues);
-
       const formData = new FormData();
       formData.append("name", formValues.name);
       formData.append("price", formValues.price);
