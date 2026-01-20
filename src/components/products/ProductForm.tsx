@@ -25,7 +25,7 @@ const ACCEPTED_IMAGE_TYPES = [
   "image/webp",
 ];
 
-const MAX_FILES = 3;
+const MAX_FILES = 5;
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
 const productSchema = z.object({
