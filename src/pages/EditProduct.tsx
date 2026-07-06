@@ -44,6 +44,7 @@ export default function EditProduct() {
       formData.append("availability", String(formValues.availability));
       formData.append("benefits", formValues.benefits?.join() || []);
       formData.append("weight",String(formValues.Weight));
+      formData.append("article_id",formValues.article_id??"")
       // toDelete is an array -> send as JSON string
       if (Array.isArray(formValues.toDelete) && formValues.toDelete.length > 0) {
         formData.append("toDelete", JSON.stringify(formValues.toDelete));
@@ -55,7 +56,6 @@ export default function EditProduct() {
           formData.append("image", file);
         });
       }
-
       const resp = await updateProductAPI(formData, id);
 
       toast({
@@ -112,6 +112,7 @@ export default function EditProduct() {
     Weight: product.weight||0,
     // This is used by your ProductForm for previews
     existingImages: product.images || (product.image ? [product.image] : []),
+    article_id:product.article_id||""
   };
 
   return (

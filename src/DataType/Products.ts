@@ -12,6 +12,7 @@ export interface ProductsType {
   rating: number;
   type: string;
   benefits: string[];
+  article_id:string;
 }
 
 
@@ -30,5 +31,6 @@ export function data_to_product(data: any): Products {
     rating: Number(data.rating) ?? 5,
     type: (data.type ?? "precious:moti").trim(),
     benefits: Array.isArray(data.benefits) ? data.benefits : [],
+    article_id:data.article_id||""
   };
 }

@@ -19,6 +19,7 @@ type ProductSubmitPayload = {
   Weight?:number;
   image: File[];      // from ProductForm
   toDelete: string[];
+  article_id:string;
 };
 export default function AddProduct() {
   const navigate = useNavigate();
@@ -39,6 +40,7 @@ export default function AddProduct() {
       formData.append("availability", String(data.availability));
       formData.append("benefits", data.benefits?.join());
       formData.append("weight",String(data.Weight));
+      formData.append("article_id",data.article_id);
       // multiple images – backend should read `req.files` for "images"
       data.image.forEach((file) => {
         formData.append("image", file);

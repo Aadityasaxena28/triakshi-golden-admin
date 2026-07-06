@@ -50,6 +50,7 @@ const productSchema = z.object({
       "Each image must be below 5MB"
     ),
   benefits: z.array(z.string()).optional(),
+  article_id:z.string().optional()
 });
 
 type ProductFormData = z.infer<typeof productSchema>;
@@ -88,8 +89,29 @@ export function ProductForm({ initialData, onSubmit, isLoading }: ProductFormPro
       Weight: Number(initialData?.Weight)||0,
       benefits: initialData?.benefits ||[],
       image: [],
+      article_id: initialData?.article_id||""
     },
   });
+  useEffect(()=>{
+    if(initialData){
+      form.reset({
+        name:initialData.name||"",
+        price:initialData.price||0,
+        quantity:initialData.quantity||0,
+        type:initialData.type||"",
+        category:initialData.category||"",
+        description:initialData.description||"",
+        discount:initialData.discount||0,
+        availability:initialData.availability??true,
+        Weight:Number(initialData.Weight)||0,
+        benefits:initialData.benefits||[],
+        image:[],
+        article_id:initialData.article_id||"",
+      });
+
+      setBenefits(initialData.benefits||[]);
+    }
+  },[initialData,form]);
 
   // Initialize existing images
   useEffect(() => {
@@ -254,6 +276,26 @@ export function ProductForm({ initialData, onSubmit, isLoading }: ProductFormPro
                         placeholder="0"
                         {...field}
                         onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/*Article Id*/}
+              <FormField
+                control={form.control}
+                name="article_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Article Id</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="string"
+                        placeholder=""
+                        {...field}
+                        onChange={(e) => field.onChange(e.target.value.trim())}
                       />
                     </FormControl>
                     <FormMessage />
