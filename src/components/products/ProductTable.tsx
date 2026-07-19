@@ -32,6 +32,7 @@ interface Product {
   type: string;
   category?: string;
   image?: string;
+  images?:string;
 }
 
 interface ProductTableProps {
@@ -135,6 +136,22 @@ export function ProductTable({ products, onDelete }: ProductTableProps) {
                       onClick={() => setDeleteId(product.id)}
                     >
                       <Trash2 className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={()=>navigate(`/products/${product.id}/reviews`,{
+                        state:{
+                          product:{ _id:product.id,
+                                name:product.name,
+                                image: product.image||"",
+                                images:product.images||[],
+                                existingImages:[]
+                              }
+                            },
+                      })}
+                    >
+                      Reviews
                     </Button>
                   </div>
                 </TableCell>

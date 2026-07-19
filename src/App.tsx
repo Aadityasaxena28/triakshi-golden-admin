@@ -14,6 +14,7 @@ import NotFound from "./pages/NotFound";
 import Products from "./pages/Products";
 import RequireAuth from "./pages/RequireAuth";
 import SlotManagement from "./pages/slot-booking";
+import ProductReviewsPage from "./pages/Review";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +35,7 @@ const App = () => (
           <Route path="/bills" element={<AdminLayout><Bills /></AdminLayout>} />
           <Route path="/bills/:billId" element={<AdminLayout><BillDetails /></AdminLayout>} />
           <Route path="/manage-slots" element={<AdminLayout><SlotManagement/></AdminLayout>}/>
+          <Route path="/products/:productID/reviews" element={<ProductReviewsPage/>}/>
           </Route>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
